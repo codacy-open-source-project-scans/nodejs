@@ -744,25 +744,26 @@ changes:
     **Default:** `false`.
   * `files`: {Array} An array containing the list of files to run.
     **Default** matching files from [test runner execution model][].
-  * `setup` {Function} A function that accepts the `TestsStream` instance
-    and can be used to setup listeners before any tests are run.
-    **Default:** `undefined`.
-  * `signal` {AbortSignal} Allows aborting an in-progress test execution.
-  * `timeout` {number} A number of milliseconds the test execution will
-    fail after.
-    If unspecified, subtests inherit this value from their parent.
-    **Default:** `Infinity`.
   * `inspectPort` {number|Function} Sets inspector port of test child process.
     This can be a number, or a function that takes no arguments and returns a
     number. If a nullish value is provided, each process gets its own port,
     incremented from the primary's `process.debugPort`.
     **Default:** `undefined`.
+  * `setup` {Function} A function that accepts the `TestsStream` instance
+    and can be used to setup listeners before any tests are run.
+    **Default:** `undefined`.
+  * `signal` {AbortSignal} Allows aborting an in-progress test execution.
   * `testNamePatterns` {string|RegExp|Array} A String, RegExp or a RegExp Array,
     that can be used to only run tests whose name matches the provided pattern.
     Test name patterns are interpreted as JavaScript regular expressions.
     For each test that is executed, any corresponding test hooks, such as
     `beforeEach()`, are also run.
     **Default:** `undefined`.
+  * `timeout` {number} A number of milliseconds the test execution will
+    fail after.
+    If unspecified, subtests inherit this value from their parent.
+    **Default:** `Infinity`.
+  * `watch` {boolean} Whether to run in watch mode or not. **Default:** `false`.
 * Returns: {TestsStream}
 
 ```mjs
@@ -1460,15 +1461,35 @@ object, streaming a series of events representing the execution of the tests.
 
 Emitted when code coverage is enabled and all tests have completed.
 
+### Event: `'test:dequeue'`
+
+* `data` {Object}
+  * `file` {string|undefined} The path of the test file,
+    `undefined` if test was run through the REPL.
+  * `name` {string} The test name.
+  * `nesting` {number} The nesting level of the test.
+
+Emitted when a test is dequeued, right before it is executed.
+
 ### Event: `'test:diagnostic'`
 
 * `data` {Object}
   * `file` {string|undefined} The path of the test file,
-    undefined if test is not ran through a file.
+    `undefined` if test was run through the REPL.
   * `message` {string} The diagnostic message.
   * `nesting` {number} The nesting level of the test.
 
 Emitted when [`context.diagnostic`][] is called.
+
+### Event: `'test:enqueue'`
+
+* `data` {Object}
+  * `file` {string|undefined} The path of the test file,
+    `undefined` if test was run through the REPL.
+  * `name` {string} The test name.
+  * `nesting` {number} The nesting level of the test.
+
+Emitted when a test is enqueued for execution.
 
 ### Event: `'test:fail'`
 
@@ -1477,7 +1498,7 @@ Emitted when [`context.diagnostic`][] is called.
     * `duration` {number} The duration of the test in milliseconds.
     * `error` {Error} The error thrown by the test.
   * `file` {string|undefined} The path of the test file,
-    undefined if test is not ran through a file.
+    `undefined` if test was run through the REPL.
   * `name` {string} The test name.
   * `nesting` {number} The nesting level of the test.
   * `testNumber` {number} The ordinal number of the test.
@@ -1492,7 +1513,7 @@ Emitted when a test fails.
   * `details` {Object} Additional execution metadata.
     * `duration` {number} The duration of the test in milliseconds.
   * `file` {string|undefined} The path of the test file,
-    undefined if test is not ran through a file.
+    `undefined` if test was run through the REPL.
   * `name` {string} The test name.
   * `nesting` {number} The nesting level of the test.
   * `testNumber` {number} The ordinal number of the test.
@@ -1505,7 +1526,7 @@ Emitted when a test passes.
 
 * `data` {Object}
   * `file` {string|undefined} The path of the test file,
-    undefined if test is not ran through a file.
+    `undefined` if test was run through the REPL.
   * `nesting` {number} The nesting level of the test.
   * `count` {number} The number of subtests that have ran.
 
@@ -1515,11 +1536,13 @@ Emitted when all subtests have completed for a given test.
 
 * `data` {Object}
   * `file` {string|undefined} The path of the test file,
-    undefined if test is not ran through a file.
+    `undefined` if test was run through the REPL.
   * `name` {string} The test name.
   * `nesting` {number} The nesting level of the test.
 
-Emitted when a test starts.
+Emitted when a test starts reporting its own and its subtests status.
+This event is guaranteed to be emitted in the same order as the tests are
+defined.
 
 ### Event: `'test:stderr'`
 
@@ -1538,6 +1561,10 @@ This event is only emitted if `--test` flag is passed.
 
 Emitted when a running test writes to `stdout`.
 This event is only emitted if `--test` flag is passed.
+
+### Event: `'test:watch:drained'`
+
+Emitted when no more tests are queued for execution in watch mode.
 
 ## Class: `TestContext`
 
