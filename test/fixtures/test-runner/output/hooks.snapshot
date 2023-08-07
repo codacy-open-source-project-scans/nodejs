@@ -56,7 +56,7 @@ not ok 2 - before throws
   duration_ms: *
   type: 'suite'
   failureType: 'hookFailed'
-  error: 'failed running before hook'
+  error: 'before'
   code: 'ERR_TEST_FAILURE'
   stack: |-
     *
@@ -86,7 +86,7 @@ not ok 3 - after throws
   duration_ms: *
   type: 'suite'
   failureType: 'hookFailed'
-  error: 'failed running after hook'
+  error: 'after'
   code: 'ERR_TEST_FAILURE'
   stack: |-
     *
@@ -105,7 +105,7 @@ not ok 3 - after throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running beforeEach hook'
+      error: 'beforeEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -124,7 +124,7 @@ not ok 3 - after throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running beforeEach hook'
+      error: 'beforeEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -133,8 +133,6 @@ not ok 3 - after throws
         *
         *
         *
-        *
-        async Promise.all (index 0)
         *
         *
       ...
@@ -153,7 +151,7 @@ not ok 4 - beforeEach throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running afterEach hook'
+      error: 'afterEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -172,7 +170,7 @@ not ok 4 - beforeEach throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running afterEach hook'
+      error: 'afterEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -183,7 +181,6 @@ not ok 4 - beforeEach throws
         *
         *
         *
-        async Promise.all (index 0)
         *
       ...
     1..2
@@ -254,7 +251,7 @@ not ok 6 - afterEach when test fails
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running afterEach hook'
+      error: 'afterEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -265,7 +262,6 @@ not ok 6 - afterEach when test fails
         *
         *
         *
-        async Promise.all (index 0)
         *
       ...
     1..2
@@ -315,7 +311,7 @@ ok 8 - test hooks
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running before hook'
+      error: 'before'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -334,7 +330,7 @@ ok 8 - test hooks
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running before hook'
+      error: 'before'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -362,7 +358,7 @@ not ok 9 - t.before throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running beforeEach hook'
+      error: 'beforeEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -381,7 +377,7 @@ not ok 9 - t.before throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running beforeEach hook'
+      error: 'beforeEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -409,7 +405,7 @@ not ok 10 - t.beforeEach throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running afterEach hook'
+      error: 'afterEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -428,7 +424,7 @@ not ok 10 - t.beforeEach throws
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running afterEach hook'
+      error: 'afterEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *
@@ -506,7 +502,7 @@ not ok 12 - afterEach when test fails
       ---
       duration_ms: *
       failureType: 'hookFailed'
-      error: 'failed running afterEach hook'
+      error: 'afterEach'
       code: 'ERR_TEST_FAILURE'
       stack: |-
         *

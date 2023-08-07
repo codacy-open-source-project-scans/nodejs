@@ -619,10 +619,6 @@ void Environment::AssignToContext(Local<v8::Context> context,
   context->SetAlignedPointerInEmbedderData(ContextEmbedderIndex::kEnvironment,
                                            this);
   context->SetAlignedPointerInEmbedderData(ContextEmbedderIndex::kRealm, realm);
-  // Used to retrieve bindings
-  context->SetAlignedPointerInEmbedderData(
-      ContextEmbedderIndex::kBindingDataStoreIndex,
-      realm != nullptr ? realm->binding_data_store() : nullptr);
 
   // ContextifyContexts will update this to a pointer to the native object.
   context->SetAlignedPointerInEmbedderData(
@@ -645,8 +641,6 @@ void Environment::UnassignFromContext(Local<v8::Context> context) {
                                              nullptr);
     context->SetAlignedPointerInEmbedderData(ContextEmbedderIndex::kRealm,
                                              nullptr);
-    context->SetAlignedPointerInEmbedderData(
-        ContextEmbedderIndex::kBindingDataStoreIndex, nullptr);
     context->SetAlignedPointerInEmbedderData(
         ContextEmbedderIndex::kContextifyContext, nullptr);
   }
@@ -850,19 +844,17 @@ Environment::Environment(IsolateData* isolate_data,
 
   if (options_->experimental_permission) {
     permission()->EnablePermissions();
-    // If any permission is set the process shouldn't be able to neither
+    // The process shouldn't be able to neither
     // spawn/worker nor use addons or enable inspector
     // unless explicitly allowed by the user
-    if (!options_->allow_fs_read.empty() || !options_->allow_fs_write.empty()) {
-      options_->allow_native_addons = false;
-      flags_ = flags_ | EnvironmentFlags::kNoCreateInspector;
-      permission()->Apply("*", permission::PermissionScope::kInspector);
-      if (!options_->allow_child_process) {
-        permission()->Apply("*", permission::PermissionScope::kChildProcess);
-      }
-      if (!options_->allow_worker_threads) {
-        permission()->Apply("*", permission::PermissionScope::kWorkerThreads);
-      }
+    options_->allow_native_addons = false;
+    flags_ = flags_ | EnvironmentFlags::kNoCreateInspector;
+    permission()->Apply("*", permission::PermissionScope::kInspector);
+    if (!options_->allow_child_process) {
+      permission()->Apply("*", permission::PermissionScope::kChildProcess);
+    }
+    if (!options_->allow_worker_threads) {
+      permission()->Apply("*", permission::PermissionScope::kWorkerThreads);
     }
 
     if (!options_->allow_fs_read.empty()) {
