@@ -322,7 +322,7 @@ import { readFileSync } from 'node:fs';
 const buffer = readFileSync(new URL('./data.proto', import.meta.url));
 ```
 
-### `import.meta.resolve(specifier[, parent])`
+### `import.meta.resolve(specifier)`
 
 <!--
 added:
@@ -337,35 +337,44 @@ changes:
       - v14.18.0
     pr-url: https://github.com/nodejs/node/pull/38587
     description: Add support for WHATWG `URL` object to `parentURL` parameter.
+  - version:
+      - REPLACEME
+    pr-url: https://github.com/nodejs/node/pull/49028
+    description: Unflag import.meta.resolve, with `parentURL` parameter still
+                 flagged.
 -->
 
-> Stability: 1 - Experimental
+> Stability: 1.2 - Release candidate
 
-This feature is only available with the `--experimental-import-meta-resolve`
-command flag enabled.
+* `specifier` {string} The module specifier to resolve relative to the
+  current module.
+* Returns: {string} The absolute (`file:`) URL string for the resolved module.
 
-* `specifier` {string} The module specifier to resolve relative to `parent`.
-* `parent` {string|URL} The absolute parent module URL to resolve from. If none
-  is specified, the value of `import.meta.url` is used as the default.
-* Returns: {string}
+[`import.meta.resolve`][] is a module-relative resolution function scoped to
+each module, returning the URL string.
 
-Provides a module-relative resolution function scoped to each module, returning
-the URL string. In alignment with browser behavior, this now returns
-synchronously.
+```js
+const dependencyAsset = import.meta.resolve('component-lib/asset.css');
+// file:///app/node_modules/component-lib/asset.css
+```
+
+All features of the Node.js module resolution are supported. Dependency
+resolutions are subject to the permitted exports resolutions within the package.
+
+```js
+import.meta.resolve('./dep', import.meta.url);
+// file:///app/dep
+```
 
 > **Caveat** This can result in synchronous file-system operations, which
 > can impact performance similarly to `require.resolve`.
 
-```js
-const dependencyAsset = import.meta.resolve('component-lib/asset.css');
-```
+Previously, Node.js implemented an asynchronous resolver which also permitted
+a second contextual argument. The implementation has since been updated to be
+synchronous, with the second contextual `parent` argument still accessible
+behind the `--experimental-import-meta-resolve` flag:
 
-`import.meta.resolve` also accepts a second argument which is the parent module
-from which to resolve:
-
-```js
-import.meta.resolve('./dep', import.meta.url);
-```
+* `parent` {string|URL} An optional absolute parent module URL to resolve from.
 
 ## Interoperability with CommonJS
 
@@ -501,8 +510,8 @@ They can instead be loaded with [`module.createRequire()`][] or
 
 Relative resolution can be handled via `new URL('./local', import.meta.url)`.
 
-For a complete `require.resolve` replacement, there is a flagged experimental
-[`import.meta.resolve`][] API.
+For a complete `require.resolve` replacement, there is the
+[import.meta.resolve][] API.
 
 Alternatively `module.createRequire()` can be used.
 
@@ -757,7 +766,7 @@ added: REPLACEME
 The `initialize` hook provides a way to define a custom function that runs
 in the loader's thread when the loader is initialized. Initialization happens
 when the loader is registered via [`register`][] or registered via the
-`--loader` command line option.
+`--experimental-loader` command line option.
 
 This hook can send and receive data from a [`register`][] invocation, including
 ports and other transferrable objects. The return value of `initialize` must be
@@ -908,6 +917,9 @@ export function resolve(specifier, context, nextResolve) {
 
 <!-- YAML
 changes:
+  - version: REPLACEME
+    pr-url: https://github.com/nodejs/node/pull/47999
+    description: Add support for `source` with format `commonjs`.
   - version:
     - v18.6.0
     - v16.17.0
@@ -945,20 +957,43 @@ validating the import assertion.
 
 The final value of `format` must be one of the following:
 
-| `format`     | Description                    | Acceptable types for `source` returned by `load`      |
-| ------------ | ------------------------------ | ----------------------------------------------------- |
-| `'builtin'`  | Load a Node.js builtin module  | Not applicable                                        |
-| `'commonjs'` | Load a Node.js CommonJS module | Not applicable                                        |
-| `'json'`     | Load a JSON file               | { [`string`][], [`ArrayBuffer`][], [`TypedArray`][] } |
-| `'module'`   | Load an ES module              | { [`string`][], [`ArrayBuffer`][], [`TypedArray`][] } |
-| `'wasm'`     | Load a WebAssembly module      | { [`ArrayBuffer`][], [`TypedArray`][] }               |
+| `format`     | Description                    | Acceptable types for `source` returned by `load`                           |
+| ------------ | ------------------------------ | -------------------------------------------------------------------------- |
+| `'builtin'`  | Load a Node.js builtin module  | Not applicable                                                             |
+| `'commonjs'` | Load a Node.js CommonJS module | { [`string`][], [`ArrayBuffer`][], [`TypedArray`][], `null`, `undefined` } |
+| `'json'`     | Load a JSON file               | { [`string`][], [`ArrayBuffer`][], [`TypedArray`][] }                      |
+| `'module'`   | Load an ES module              | { [`string`][], [`ArrayBuffer`][], [`TypedArray`][] }                      |
+| `'wasm'`     | Load a WebAssembly module      | { [`ArrayBuffer`][], [`TypedArray`][] }                                    |
 
 The value of `source` is ignored for type `'builtin'` because currently it is
-not possible to replace the value of a Node.js builtin (core) module. The value
-of `source` is ignored for type `'commonjs'` because the CommonJS module loader
-does not provide a mechanism for the ES module loader to override the
-[CommonJS module return value](#commonjs-namespaces). This limitation might be
-overcome in the future.
+not possible to replace the value of a Node.js builtin (core) module.
+
+The value of `source` can be omitted for type `'commonjs'`. When a `source` is
+provided, all `require` calls from this module will be processed by the ESM
+loader with registered `resolve` and `load` hooks; all `require.resolve` calls
+from this module will be processed by the ESM loader with registered `resolve`
+hooks; `require.extensions` and monkey-patching on the CommonJS module loader
+will not apply. If `source` is undefined or `null`, it will be handled by the
+CommonJS module loader and `require`/`require.resolve` calls will not go through
+the registered hooks. This behavior for nullish `source` is temporary — in the
+future, nullish `source` will not be supported.
+
+The Node.js own `load` implementation, which is the value of `next` for the last
+loader in the `load` chain, returns `null` for `source` when `format` is
+`'commonjs'` for backward compatibility. Here is an example loader that would
+opt-in to using the non-default behavior:
+
+```js
+import { readFile } from 'node:fs/promises';
+
+export async function load(url, context, nextLoad) {
+  const result = await nextLoad(url, context);
+  if (result.format === 'commonjs') {
+    result.source ??= await readFile(new URL(result.responseURL ?? url));
+  }
+  return result;
+}
+```
 
 > **Caveat**: The ESM `load` hook and namespaced exports from CommonJS modules
 > are incompatible. Attempting to use them together will result in an empty
@@ -1672,7 +1707,7 @@ for ESM specifiers is [commonjs-extension-resolution-loader][].
 [`data:` URLs]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs
 [`export`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export
 [`import()`]: #import-expressions
-[`import.meta.resolve`]: #importmetaresolvespecifier-parent
+[`import.meta.resolve`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/import.meta/resolve
 [`import.meta.url`]: #importmetaurl
 [`import`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import
 [`initialize`]: #initialize
@@ -1690,6 +1725,7 @@ for ESM specifiers is [commonjs-extension-resolution-loader][].
 [cjs-module-lexer]: https://github.com/nodejs/cjs-module-lexer/tree/1.2.2
 [commonjs-extension-resolution-loader]: https://github.com/nodejs/loaders-test/tree/main/commonjs-extension-resolution-loader
 [custom https loader]: #https-loader
+[import.meta.resolve]: #importmetaresolvespecifier
 [load hook]: #loadurl-context-nextload
 [percent-encoded]: url.md#percent-encoding-in-urls
 [special scheme]: https://url.spec.whatwg.org/#special-scheme

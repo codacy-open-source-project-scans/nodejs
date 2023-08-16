@@ -15,7 +15,7 @@ This a list of all the dependencies:
 * [c-ares 1.19.0][]
 * [cjs-module-lexer 1.2.2][]
 * [corepack][]
-* [googletest c875c4e][]
+* [googletest 7e33b6a][]
 * [histogram 0.11.8][]
 * [icu-small 73.2][]
 * [libuv 1.46.0][]
@@ -28,10 +28,10 @@ This a list of all the dependencies:
 * [openssl 3.0.8][]
 * [postject 1.0.0-alpha.6][]
 * [simdutf 3.2.14][]
-* [undici 5.22.1][]
+* [undici 5.23.0][]
 * [uvwasi 0.0.16][]
 * [V8 11.3.244.8][]
-* [zlib 1.2.13.1-motley-61dc0bd][]
+* [zlib 1.2.13.1-motley-526382e][]
 
 Any code which meets one or more of these conditions should
 be managed as a dependency:
@@ -189,7 +189,7 @@ In practical terms, Corepack will let you use Yarn and pnpm without having to
 install them - just like what currently happens with npm, which is shipped
 by Node.js by default.
 
-### googletest c875c4e
+### googletest 7e33b6a
 
 The [googletest](https://github.com/google/googletest) dependency is Google’s
 C++ testing and mocking framework.
@@ -291,7 +291,7 @@ The [postject](https://github.com/nodejs/postject) dependency is used for the
 The [simdutf](https://github.com/simdutf/simdutf) dependency is
 a C++ library for fast UTF-8 decoding and encoding.
 
-### undici 5.22.1
+### undici 5.23.0
 
 The [undici](https://github.com/nodejs/undici) dependency is an HTTP/1.1 client,
 written from scratch for Node.js..
@@ -311,7 +311,7 @@ See [maintaining-web-assembly][] for more informations.
 high-performance JavaScript and WebAssembly engine, written in C++.
 See [maintaining-V8][] for more informations.
 
-### zlib 1.2.13.1-motley-61dc0bd
+### zlib 1.2.13.1-motley-526382e
 
 The [zlib](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/third_party/zlib)
 dependency lossless data-compression library,
@@ -326,7 +326,7 @@ performance improvements not currently available in standard zlib.
 [cjs-module-lexer 1.2.2]: #cjs-module-lexer-122
 [corepack]: #corepack
 [dependency-update-action]: ../../../.github/workflows/tools.yml
-[googletest c875c4e]: #googletest-c875c4e
+[googletest 7e33b6a]: #googletest-7e33b6a
 [histogram 0.11.8]: #histogram-0118
 [icu-small 73.2]: #icu-small-732
 [libuv 1.46.0]: #libuv-1460
@@ -345,8 +345,8 @@ performance improvements not currently available in standard zlib.
 [openssl 3.0.8]: #openssl-308
 [postject 1.0.0-alpha.6]: #postject-100-alpha6
 [simdutf 3.2.14]: #simdutf-3214
-[undici 5.22.1]: #undici-5221
+[undici 5.23.0]: #undici-5230
 [update-openssl-action]: ../../../.github/workflows/update-openssl.yml
 [uvwasi 0.0.16]: #uvwasi-0016
 [v8 11.3.244.8]: #v8-1132448
-[zlib 1.2.13.1-motley-61dc0bd]: #zlib-12131-motley-61dc0bd
+[zlib 1.2.13.1-motley-526382e]: #zlib-12131-motley-526382e
