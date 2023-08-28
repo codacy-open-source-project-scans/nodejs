@@ -89,7 +89,7 @@ skip_regex = re.compile(r'# SKIP\S*\s+(.*)', re.IGNORECASE)
 VERBOSE = False
 
 os.umask(0o022)
-os.environ['NODE_OPTIONS'] = ''
+os.environ.pop('NODE_OPTIONS', None)
 
 # ---------------------------------------------
 # --- P r o g r e s s   I n d i c a t o r s ---
@@ -317,8 +317,7 @@ class DotsProgressIndicator(SimpleProgressIndicator):
 
 class ActionsAnnotationProgressIndicator(DotsProgressIndicator):
   def AboutToRun(self, case):
-    if not hasattr(case, 'additional_flags'):
-      case.additional_flags = []
+    case.additional_flags = case.additional_flags.copy() if hasattr(case, 'additional_flags') else []
     case.additional_flags.append('--test-reporter=./tools/github_reporter/index.js')
     case.additional_flags.append('--test-reporter-destination=stdout')
 
