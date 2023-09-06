@@ -1579,9 +1579,10 @@ added:
 Enables timer mocking for the specified timers.
 
 * `timers` {Array} An optional array containing the timers to mock.
-  The currently supported timer values are `'setInterval'` and `'setTimeout'`.
-  If no array is provided, all timers (`'setInterval'`, `'clearInterval'`, `'setTimeout'`,
-  and `'clearTimeout'`) will be mocked by default.
+  The currently supported timer values are `'setInterval'`, `'setTimeout'`,
+  and `'setImmediate'`.  If no value is provided, all timers (`'setInterval'`,
+  `'clearInterval'`, `'setTimeout'`, `'clearTimeout'`, `'setImmediate'`,
+  and `'clearImmediate'`) will be mocked by default.
 
 **Note:** When you enable mocking for a specific timer, its associated
 clear function will also be implicitly mocked.
@@ -2011,8 +2012,18 @@ object, streaming a series of events representing the execution of the tests.
       * `coveredLinePercent` {number} The percentage of lines covered.
       * `coveredBranchPercent` {number} The percentage of branches covered.
       * `coveredFunctionPercent` {number} The percentage of functions covered.
-      * `uncoveredLineNumbers` {Array} An array of integers representing line
-        numbers that are uncovered.
+      * `functions` {Array} An array of functions representing function
+        coverage.
+        * `name` {string} The name of the function.
+        * `line` {number} The line number where the function is defined.
+        * `count` {number} The number of times the function was called.
+      * `branches` {Array} An array of branches representing branch coverage.
+        * `line` {number} The line number where the branch is defined.
+        * `count` {number} The number of times the branch was taken.
+      * `lines` {Array} An array of lines representing line
+        numbers and the number of times they were covered.
+        * `line` {number} The line number.
+        * `count` {number} The number of times the line was covered.
     * `totals` {Object} An object containing a summary of coverage for all
       files.
       * `totalLineCount` {number} The total number of lines.
