@@ -478,13 +478,16 @@ added:
   - v17.5.0
   - v16.15.0
 changes:
+  - version:
+    - v21.0.0
+    pr-url: https://github.com/nodejs/node/pull/45684
+    description: No longer experimental.
   - version: v18.0.0
     pr-url: https://github.com/nodejs/node/pull/41811
     description: No longer behind `--experimental-global-fetch` CLI flag.
 -->
 
-> Stability: 1 - Experimental. Disable this API with the [`--no-experimental-fetch`][]
-> CLI flag.
+> Stability: 2 - Stable
 
 A browser-compatible implementation of the [`fetch()`][] function.
 
@@ -505,13 +508,16 @@ added:
   - v17.6.0
   - v16.15.0
 changes:
+  - version:
+    - v21.0.0
+    pr-url: https://github.com/nodejs/node/pull/45684
+    description: No longer experimental.
   - version: v18.0.0
     pr-url: https://github.com/nodejs/node/pull/41811
     description: No longer behind `--experimental-global-fetch` CLI flag.
 -->
 
-> Stability: 1 - Experimental. Disable this API with the [`--no-experimental-fetch`][]
-> CLI flag.
+> Stability: 2 - Stable
 
 A browser-compatible implementation of {FormData}.
 
@@ -541,13 +547,16 @@ added:
   - v17.5.0
   - v16.15.0
 changes:
+  - version:
+    - v21.0.0
+    pr-url: https://github.com/nodejs/node/pull/45684
+    description: No longer experimental.
   - version: v18.0.0
     pr-url: https://github.com/nodejs/node/pull/41811
     description: No longer behind `--experimental-global-fetch` CLI flag.
 -->
 
-> Stability: 1 - Experimental. Disable this API with the [`--no-experimental-fetch`][]
-> CLI flag.
+> Stability: 2 - Stable
 
 A browser-compatible implementation of {Headers}.
 
@@ -588,27 +597,35 @@ This variable may appear to be global but is not. See [`module`][].
 ## `Navigator`
 
 <!-- YAML
-added: REPLACEME
+added: v21.0.0
 -->
 
-> Stability: 1 - Experimental
+> Stability: 1.1 - Active development
 
 A partial implementation of the [Navigator API][].
 
 ## `navigator`
 
 <!-- YAML
-added: REPLACEME
+added: v21.0.0
 -->
 
-> Stability: 1 - Experimental
+> Stability: 1.1 - Active development
 
 A partial implementation of [`window.navigator`][].
+
+If your app or a dependency uses a check for `navigator` to determine whether it
+is running in a browser, the following can be used to delete the `navigator`
+global before app code runs:
+
+```bash
+node --import 'data:text/javascript,delete globalThis.navigator' app.js
+```
 
 ### `navigator.hardwareConcurrency`
 
 <!-- YAML
-added: REPLACEME
+added: v21.0.0
 -->
 
 * {number}
@@ -617,7 +634,22 @@ The `navigator.hardwareConcurrency` read-only property returns the number of
 logical processors available to the current Node.js instance.
 
 ```js
-console.log(`This process is running on ${navigator.hardwareConcurrency}`);
+console.log(`This process is running on ${navigator.hardwareConcurrency} logical processors`);
+```
+
+### `navigator.userAgent`
+
+<!-- YAML
+added: v21.1.0
+-->
+
+* {string}
+
+The `navigator.userAgent` read-only property returns user agent
+consisting of the runtime name and major version number.
+
+```js
+console.log(`The user-agent is ${navigator.userAgent}`); // Prints "Node.js/21"
 ```
 
 ## `PerformanceEntry`
@@ -813,13 +845,16 @@ added:
   - v17.5.0
   - v16.15.0
 changes:
+  - version:
+    - v21.0.0
+    pr-url: https://github.com/nodejs/node/pull/45684
+    description: No longer experimental.
   - version: v18.0.0
     pr-url: https://github.com/nodejs/node/pull/41811
     description: No longer behind `--experimental-global-fetch` CLI flag.
 -->
 
-> Stability: 1 - Experimental. Disable this API with the [`--no-experimental-fetch`][]
-> CLI flag.
+> Stability: 2 - Stable
 
 A browser-compatible implementation of {Response}.
 
@@ -830,13 +865,16 @@ added:
   - v17.5.0
   - v16.15.0
 changes:
+  - version:
+    - v21.0.0
+    pr-url: https://github.com/nodejs/node/pull/45684
+    description: No longer experimental.
   - version: v18.0.0
     pr-url: https://github.com/nodejs/node/pull/41811
     description: No longer behind `--experimental-global-fetch` CLI flag.
 -->
 
-> Stability: 1 - Experimental. Disable this API with the [`--no-experimental-fetch`][]
-> CLI flag.
+> Stability: 2 - Stable
 
 A browser-compatible implementation of {Request}.
 
@@ -1003,6 +1041,17 @@ The object that acts as the namespace for all W3C
 [WebAssembly][webassembly-org] related functionality. See the
 [Mozilla Developer Network][webassembly-mdn] for usage and compatibility.
 
+## `WebSocket`
+
+<!-- YAML
+added: v21.0.0
+-->
+
+> Stability: 1 - Experimental.
+
+A browser-compatible implementation of [`WebSocket`][]. Enable this API
+with the [`--experimental-websocket`][] CLI flag.
+
 ## Class: `WritableStream`
 
 <!-- YAML
@@ -1037,7 +1086,7 @@ A browser-compatible implementation of [`WritableStreamDefaultWriter`][].
 [ECMAScript module]: esm.md
 [Navigator API]: https://html.spec.whatwg.org/multipage/system-state.html#the-navigator-object
 [Web Crypto API]: webcrypto.md
-[`--no-experimental-fetch`]: cli.md#--no-experimental-fetch
+[`--experimental-websocket`]: cli.md#--experimental-websocket
 [`--no-experimental-global-customevent`]: cli.md#--no-experimental-global-customevent
 [`--no-experimental-global-webcrypto`]: cli.md#--no-experimental-global-webcrypto
 [`AbortController`]: https://developer.mozilla.org/en-US/docs/Web/API/AbortController
@@ -1071,6 +1120,7 @@ A browser-compatible implementation of [`WritableStreamDefaultWriter`][].
 [`TransformStream`]: webstreams.md#class-transformstream
 [`URLSearchParams`]: url.md#class-urlsearchparams
 [`URL`]: url.md#class-url
+[`WebSocket`]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
 [`WritableStreamDefaultController`]: webstreams.md#class-writablestreamdefaultcontroller
 [`WritableStreamDefaultWriter`]: webstreams.md#class-writablestreamdefaultwriter
 [`WritableStream`]: webstreams.md#class-writablestream

@@ -321,8 +321,9 @@ class SerializerDelegate : public ValueSerializer::Delegate {
     }
 
     if (JSTransferable::IsJSTransferable(env_, context_, object)) {
-      JSTransferable* js_transferable = JSTransferable::Wrap(env_, object);
-      return WriteHostObject(BaseObjectPtr<BaseObject>{js_transferable});
+      BaseObjectPtr<JSTransferable> js_transferable =
+          JSTransferable::Wrap(env_, object);
+      return WriteHostObject(js_transferable);
     }
 
     // Convert process.env to a regular object.
@@ -431,7 +432,7 @@ class SerializerDelegate : public ValueSerializer::Delegate {
           return Just(true);
         }
       }
-      THROW_ERR_MISSING_TRANSFERABLE_IN_TRANSFER_LIST(env_);
+      ThrowDataCloneError(env_->clone_transfer_needed_str());
       return Nothing<bool>();
     }
 
@@ -475,7 +476,7 @@ Maybe<bool> Message::Serialize(Environment* env,
     Local<Value> entry_val = transfer_list_v[i];
     if (!entry_val->IsObject()) {
       // Only object can be transferred.
-      THROW_ERR_INVALID_TRANSFER_OBJECT(env);
+      ThrowDataCloneException(context, env->clone_untransferable_str());
       return Nothing<bool>();
     }
     Local<Object> entry = entry_val.As<Object>();
@@ -533,11 +534,10 @@ Maybe<bool> Message::Serialize(Environment* env,
       host_object = BaseObjectPtr<BaseObject>{Unwrap<BaseObject>(entry)};
     } else {
       if (!JSTransferable::IsJSTransferable(env, context, entry)) {
-        THROW_ERR_INVALID_TRANSFER_OBJECT(env);
+        ThrowDataCloneException(context, env->clone_untransferable_str());
         return Nothing<bool>();
       }
-      JSTransferable* js_transferable = JSTransferable::Wrap(env, entry);
-      host_object = BaseObjectPtr<BaseObject>{js_transferable};
+      host_object = JSTransferable::Wrap(env, entry);
     }
 
     if (env->message_port_constructor_template()->HasInstance(entry) &&
@@ -789,13 +789,20 @@ MaybeLocal<Value> MessagePort::ReceiveMessage(Local<Context> context,
 
 void MessagePort::OnMessage(MessageProcessingMode mode) {
   Debug(this, "Running MessagePort::OnMessage()");
+  // Maybe the async handle was triggered empty or more than needed.
+  // The data_ could be freed or, the handle has been/is being closed.
+  // A possible case for this, is transfer the MessagePort to another
+  // context, it will call the constructor and trigger the async handle empty.
+  // Because all data was sent from the preivous context.
+  if (IsDetached()) return;
+
   HandleScope handle_scope(env()->isolate());
   Local<Context> context =
       object(env()->isolate())->GetCreationContext().ToLocalChecked();
 
   size_t processing_limit;
   if (mode == MessageProcessingMode::kNormalOperation) {
-    Mutex::ScopedLock(data_->mutex_);
+    Mutex::ScopedLock lock(data_->mutex_);
     processing_limit = std::max(data_->incoming_messages_.size(),
                                 static_cast<size_t>(1000));
   } else {
@@ -1001,6 +1008,47 @@ static Maybe<bool> ReadIterable(Environment* env,
   return Just(true);
 }
 
+bool GetTransferList(Environment* env,
+                     Local<Context> context,
+                     Local<Value> transfer_list_v,
+                     TransferList* transfer_list_out) {
+  if (transfer_list_v->IsNullOrUndefined()) {
+    // Browsers ignore null or undefined, and otherwise accept an array or an
+    // options object.
+    return true;
+  }
+
+  if (!transfer_list_v->IsObject()) {
+    THROW_ERR_INVALID_ARG_TYPE(
+        env, "Optional transferList argument must be an iterable");
+    return false;
+  }
+
+  bool was_iterable;
+  if (!ReadIterable(env, context, *transfer_list_out, transfer_list_v)
+           .To(&was_iterable))
+    return false;
+  if (!was_iterable) {
+    Local<Value> transfer_option;
+    if (!transfer_list_v.As<Object>()
+             ->Get(context, env->transfer_string())
+             .ToLocal(&transfer_option))
+      return false;
+    if (!transfer_option->IsUndefined()) {
+      if (!ReadIterable(env, context, *transfer_list_out, transfer_option)
+               .To(&was_iterable))
+        return false;
+      if (!was_iterable) {
+        THROW_ERR_INVALID_ARG_TYPE(
+            env, "Optional options.transfer argument must be an iterable");
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 void MessagePort::PostMessage(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   Local<Object> obj = args.This();
@@ -1011,33 +1059,10 @@ void MessagePort::PostMessage(const FunctionCallbackInfo<Value>& args) {
                                        "MessagePort.postMessage");
   }
 
-  if (!args[1]->IsNullOrUndefined() && !args[1]->IsObject()) {
-    // Browsers ignore null or undefined, and otherwise accept an array or an
-    // options object.
-    return THROW_ERR_INVALID_ARG_TYPE(env,
-        "Optional transferList argument must be an iterable");
-  }
-
   TransferList transfer_list;
-  if (args[1]->IsObject()) {
-    bool was_iterable;
-    if (!ReadIterable(env, context, transfer_list, args[1]).To(&was_iterable))
-      return;
-    if (!was_iterable) {
-      Local<Value> transfer_option;
-      if (!args[1].As<Object>()->Get(context, env->transfer_string())
-          .ToLocal(&transfer_option)) return;
-      if (!transfer_option->IsUndefined()) {
-        if (!ReadIterable(env, context, transfer_list, transfer_option)
-            .To(&was_iterable)) return;
-        if (!was_iterable) {
-          return THROW_ERR_INVALID_ARG_TYPE(env,
-              "Optional options.transfer argument must be an iterable");
-        }
-      }
-    }
+  if (!GetTransferList(env, context, args[1], &transfer_list)) {
+    return;
   }
-
   MessagePort* port = Unwrap<MessagePort>(args.This());
   // Even if the backing MessagePort object has already been deleted, we still
   // want to serialize the message to ensure spec-compliant behavior w.r.t.
@@ -1190,22 +1215,26 @@ Local<FunctionTemplate> GetMessagePortConstructorTemplate(Environment* env) {
 }
 
 // static
-JSTransferable* JSTransferable::Wrap(Environment* env, Local<Object> target) {
+BaseObjectPtr<JSTransferable> JSTransferable::Wrap(Environment* env,
+                                                   Local<Object> target) {
   Local<Context> context = env->context();
   Local<Value> wrapper_val =
       target->GetPrivate(context, env->js_transferable_wrapper_private_symbol())
           .ToLocalChecked();
   DCHECK(wrapper_val->IsObject() || wrapper_val->IsUndefined());
-  JSTransferable* wrapper;
+  BaseObjectPtr<JSTransferable> wrapper;
   if (wrapper_val->IsObject()) {
-    wrapper = Unwrap<JSTransferable>(wrapper_val);
+    wrapper =
+        BaseObjectPtr<JSTransferable>{Unwrap<JSTransferable>(wrapper_val)};
   } else {
     Local<Object> wrapper_obj = env->js_transferable_constructor_template()
                                     ->GetFunction(context)
                                     .ToLocalChecked()
                                     ->NewInstance(context)
                                     .ToLocalChecked();
-    wrapper = new JSTransferable(env, wrapper_obj, target);
+    // Make sure the JSTransferable wrapper object is not garbage collected
+    // until the strong BaseObjectPtr's reference count is decreased to 0.
+    wrapper = MakeDetachedBaseObject<JSTransferable>(env, wrapper_obj, target);
     target
         ->SetPrivate(
             context, env->js_transferable_wrapper_private_symbol(), wrapper_obj)
@@ -1226,12 +1255,18 @@ JSTransferable::JSTransferable(Environment* env,
                                Local<Object> obj,
                                Local<Object> target)
     : BaseObject(env, obj) {
-  MakeWeak();
   target_.Reset(env->isolate(), target);
-  target_.SetWeak();
+}
+
+JSTransferable::~JSTransferable() {
+  HandleScope scope(env()->isolate());
+  target_.Get(env()->isolate())
+      ->DeletePrivate(env()->context(),
+                      env()->js_transferable_wrapper_private_symbol());
 }
 
 Local<Object> JSTransferable::target() const {
+  DCHECK(!target_.IsEmpty());
   return target_.Get(env()->isolate());
 }
 
@@ -1335,8 +1370,7 @@ JSTransferable::NestedTransferables() const {
     if (!JSTransferable::IsJSTransferable(env(), context, obj)) {
       continue;
     }
-    JSTransferable* js_transferable = JSTransferable::Wrap(env(), obj);
-    ret.emplace_back(js_transferable);
+    ret.emplace_back(JSTransferable::Wrap(env(), obj));
   }
   return Just(ret);
 }
@@ -1397,8 +1431,7 @@ BaseObjectPtr<BaseObject> JSTransferable::Data::Deserialize(
   if (!JSTransferable::IsJSTransferable(env, context, ret.As<Object>())) {
     return {};
   }
-  JSTransferable* js_transferable = JSTransferable::Wrap(env, ret.As<Object>());
-  return BaseObjectPtr<BaseObject>{js_transferable};
+  return JSTransferable::Wrap(env, ret.As<Object>());
 }
 
 Maybe<bool> JSTransferable::Data::FinalizeTransferWrite(
@@ -1520,6 +1553,48 @@ static void SetDeserializerCreateObjectFunction(
   env->set_messaging_deserialize_create_object(args[0].As<Function>());
 }
 
+static void StructuredClone(const FunctionCallbackInfo<Value>& args) {
+  Isolate* isolate = args.GetIsolate();
+  Local<Context> context = isolate->GetCurrentContext();
+  Realm* realm = Realm::GetCurrent(context);
+  Environment* env = realm->env();
+
+  if (args.Length() == 0) {
+    return THROW_ERR_MISSING_ARGS(env, "The value argument must be specified");
+  }
+
+  Local<Value> value = args[0];
+
+  TransferList transfer_list;
+  if (!args[1]->IsNullOrUndefined()) {
+    if (!args[1]->IsObject()) {
+      return THROW_ERR_INVALID_ARG_TYPE(
+          env, "The options argument must be either an object or undefined");
+    }
+    Local<Object> options = args[1].As<Object>();
+    Local<Value> transfer_list_v;
+    if (!options->Get(context, env->transfer_string())
+             .ToLocal(&transfer_list_v)) {
+      return;
+    }
+
+    // TODO(joyeecheung): implement this in JS land to avoid the C++ -> JS
+    // cost to convert a sequence into an array.
+    if (!GetTransferList(env, context, transfer_list_v, &transfer_list)) {
+      return;
+    }
+  }
+
+  std::shared_ptr<Message> msg = std::make_shared<Message>();
+  Local<Value> result;
+  if (msg->Serialize(env, context, value, transfer_list, Local<Object>())
+          .IsNothing() ||
+      !msg->Deserialize(env, context, nullptr).ToLocal(&result)) {
+    return;
+  }
+  args.GetReturnValue().Set(result);
+}
+
 static void MessageChannel(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   if (!args.IsConstructCall()) {
@@ -1600,6 +1675,7 @@ static void InitMessaging(Local<Object> target,
             "setDeserializerCreateObjectFunction",
             SetDeserializerCreateObjectFunction);
   SetMethod(context, target, "broadcastChannel", BroadcastChannel);
+  SetMethod(context, target, "structuredClone", StructuredClone);
 
   {
     Local<Function> domexception = GetDOMException(context).ToLocalChecked();
@@ -1623,6 +1699,7 @@ static void RegisterExternalReferences(ExternalReferenceRegistry* registry) {
   registry->Register(MessagePort::ReceiveMessage);
   registry->Register(MessagePort::MoveToContext);
   registry->Register(SetDeserializerCreateObjectFunction);
+  registry->Register(StructuredClone);
 }
 
 }  // anonymous namespace
