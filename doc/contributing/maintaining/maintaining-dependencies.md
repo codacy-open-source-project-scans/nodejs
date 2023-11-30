@@ -29,10 +29,10 @@ This a list of all the dependencies:
 * [postject 1.0.0-alpha.6][]
 * [simdjson 3.6.0][]
 * [simdutf 4.0.4][]
-* [undici 5.27.2][]
+* [undici 5.28.0][]
 * [uvwasi 0.0.19][]
 * [V8 11.8.172.12][]
-* [zlib 1.2.13.1-motley-dfc48fc][]
+* [zlib 1.2.13.1-motley-5daffc7][]
 
 Any code which meets one or more of these conditions should
 be managed as a dependency:
@@ -297,7 +297,7 @@ a C++ library for fast JSON parsing.
 The [simdutf](https://github.com/simdutf/simdutf) dependency is
 a C++ library for fast UTF-8 decoding and encoding.
 
-### undici 5.27.2
+### undici 5.28.0
 
 The [undici](https://github.com/nodejs/undici) dependency is an HTTP/1.1 client,
 written from scratch for Node.js..
@@ -317,7 +317,7 @@ See [maintaining-web-assembly][] for more informations.
 high-performance JavaScript and WebAssembly engine, written in C++.
 See [maintaining-V8][] for more informations.
 
-### zlib 1.2.13.1-motley-dfc48fc
+### zlib 1.2.13.1-motley-5daffc7
 
 The [zlib](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/third_party/zlib)
 dependency lossless data-compression library,
@@ -352,8 +352,8 @@ performance improvements not currently available in standard zlib.
 [postject 1.0.0-alpha.6]: #postject-100-alpha6
 [simdjson 3.6.0]: #simdutf-360
 [simdutf 4.0.4]: #simdutf-404
-[undici 5.27.2]: #undici-5272
+[undici 5.28.0]: #undici-5280
 [update-openssl-action]: ../../../.github/workflows/update-openssl.yml
 [uvwasi 0.0.19]: #uvwasi-0019
 [v8 11.8.172.12]: #v8-11817212
-[zlib 1.2.13.1-motley-dfc48fc]: #zlib-12131-motley-dfc48fc
+[zlib 1.2.13.1-motley-5daffc7]: #zlib-12131-motley-5daffc7

@@ -166,7 +166,7 @@ The valid arguments for the `--allow-fs-read` flag are:
   Example `--allow-fs-read=/folder1/ --allow-fs-read=/folder1/`
 
 Paths delimited by comma (`,`) are no longer allowed.
-When passing a single flag with a comma a warning will be diplayed
+When passing a single flag with a comma a warning will be displayed.
 
 Examples can be found in the [File System Permissions][] documentation.
 
@@ -220,7 +220,7 @@ The valid arguments for the `--allow-fs-write` flag are:
   Example `--allow-fs-read=/folder1/ --allow-fs-read=/folder1/`
 
 Paths delimited by comma (`,`) are no longer allowed.
-When passing a single flag with a comma a warning will be diplayed
+When passing a single flag with a comma a warning will be displayed.
 
 Examples can be found in the [File System Permissions][] documentation.
 
@@ -646,6 +646,8 @@ and `"` are usable.
 <!-- YAML
 added:
   - v21.0.0
+  - v20.10.0
+  - v18.19.0
 -->
 
 > Stability: 1.0 - Early development
@@ -676,6 +678,7 @@ JavaScript.
 <!-- YAML
 added:
   - v21.1.0
+  - v20.10.0
 -->
 
 > Stability: 1.0 - Early development
@@ -704,7 +707,9 @@ added:
   - v13.9.0
   - v12.16.2
 changes:
-  - version: v20.6.0
+  - version:
+    - v20.6.0
+    - v18.19.0
     pr-url: https://github.com/nodejs/node/pull/49028
     description: synchronous import.meta.resolve made available by default, with
                  the flag retained for enabling the experimental second argument
@@ -851,7 +856,9 @@ Enable experimental WebAssembly module support.
 ### `--experimental-websocket`
 
 <!-- YAML
-added: v21.0.0
+added:
+  - v21.0.0
+  - v20.10.0
 -->
 
 Enable experimental [`WebSocket`][] support.
@@ -1746,7 +1753,10 @@ for more details.
 ### `--test-concurrency`
 
 <!-- YAML
-added: v21.0.0
+added:
+  - v21.0.0
+  - v20.10.0
+  - v18.19.0
 -->
 
 The maximum number of test files that the test runner CLI will execute
@@ -1814,7 +1824,9 @@ The destination for the corresponding test reporter. See the documentation on
 ### `--test-shard`
 
 <!-- YAML
-added: v20.5.0
+added:
+  - v20.5.0
+  - v18.19.0
 -->
 
 Test suite shard to execute in a format of `<index>/<total>`, where
