@@ -6638,17 +6638,33 @@ The file name that this {fs.Dirent} object refers to. The type of this
 value is determined by the `options.encoding` passed to [`fs.readdir()`][] or
 [`fs.readdirSync()`][].
 
+#### `dirent.parentPath`
+
+<!-- YAML
+added:
+  - v21.4.0
+-->
+
+> Stability: 1 – Experimental
+
+* {string}
+
+The path to the parent directory of the file this {fs.Dirent} object refers to.
+
 #### `dirent.path`
 
 <!-- YAML
 added:
   - v20.1.0
   - v18.17.0
+deprecated: REPLACEME
 -->
+
+> Stability: 0 - Deprecated: Use [`dirent.parentPath`][] instead.
 
 * {string}
 
-The base path that this {fs.Dirent} object refers to.
+Alias for `dirent.parentPath`.
 
 ### Class: `fs.FSWatcher`
 
@@ -8201,6 +8217,7 @@ the file contents.
 [`Number.MAX_SAFE_INTEGER`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
 [`ReadDirectoryChangesW`]: https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-readdirectorychangesw
 [`UV_THREADPOOL_SIZE`]: cli.md#uv_threadpool_sizesize
+[`dirent.parentPath`]: #direntparentpath
 [`event ports`]: https://illumos.org/man/port_create
 [`filehandle.createReadStream()`]: #filehandlecreatereadstreamoptions
 [`filehandle.createWriteStream()`]: #filehandlecreatewritestreamoptions
