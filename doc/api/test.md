@@ -1154,8 +1154,11 @@ import process from 'node:process';
 import path from 'node:path';
 
 run({ files: [path.resolve('./tests/test.js')] })
-  .compose(tap)
-  .pipe(process.stdout);
+ .on('test:fail', () => {
+   process.exitCode = 1;
+ })
+ .compose(tap)
+ .pipe(process.stdout);
 ```
 
 ```cjs
@@ -1164,8 +1167,11 @@ const { run } = require('node:test');
 const path = require('node:path');
 
 run({ files: [path.resolve('./tests/test.js')] })
-  .compose(tap)
-  .pipe(process.stdout);
+ .on('test:fail', () => {
+   process.exitCode = 1;
+ })
+ .compose(tap)
+ .pipe(process.stdout);
 ```
 
 ## `test([name][, options][, fn])`
@@ -2410,7 +2416,7 @@ changes:
     description: added type to test:pass and test:fail events for when the test is a suite.
 -->
 
-* Extends {ReadableStream}
+* Extends {Readable}
 
 A successful call to [`run()`][] method will return a new {TestsStream}
 object, streaming a series of events representing the execution of the tests.
