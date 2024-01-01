@@ -1,10 +1,10 @@
-#include "node_bob.h"
-#include "uv.h"
 #if HAVE_OPENSSL && NODE_OPENSSL_HAS_QUIC
 
-#include <node_sockaddr-inl.h>
-#include <v8.h>
 #include "application.h"
+#include <node_bob.h>
+#include <node_sockaddr-inl.h>
+#include <uv.h>
+#include <v8.h>
 #include "defs.h"
 #include "endpoint.h"
 #include "packet.h"
@@ -38,14 +38,23 @@ const Session::Application_Options Session::Application_Options::kDefault = {};
 
 Maybe<Session::Application_Options> Session::Application_Options::From(
     Environment* env, Local<Value> value) {
-  if (value.IsEmpty() || !value->IsObject()) {
+  if (value.IsEmpty()) {
     THROW_ERR_INVALID_ARG_TYPE(env, "options must be an object");
     return Nothing<Application_Options>();
   }
 
-  auto& state = BindingData::Get(env);
-  auto params = value.As<Object>();
   Application_Options options;
+  auto& state = BindingData::Get(env);
+  if (value->IsUndefined()) {
+    return Just<Application_Options>(options);
+  }
+
+  if (!value->IsObject()) {
+    THROW_ERR_INVALID_ARG_TYPE(env, "options must be an object");
+    return Nothing<Application_Options>();
+  }
+
+  auto params = value.As<Object>();
 
 #define SET(name)                                                              \
   SetOption<Session::Application_Options,                                      \
@@ -142,7 +151,7 @@ BaseObjectPtr<Packet> Session::Application::CreateStreamDataPacket() {
   return Packet::Create(env(),
                         session_->endpoint_.get(),
                         session_->remote_address_,
-                        ngtcp2_conn_get_max_udp_payload_size(*session_),
+                        ngtcp2_conn_get_max_tx_udp_payload_size(*session_),
                         "stream data");
 }
 
@@ -282,18 +291,18 @@ ssize_t Session::Application::WriteVStream(PathStorage* path,
   uint32_t flags = NGTCP2_WRITE_STREAM_FLAG_NONE;
   if (stream_data.remaining > 0) flags |= NGTCP2_WRITE_STREAM_FLAG_MORE;
   if (stream_data.fin) flags |= NGTCP2_WRITE_STREAM_FLAG_FIN;
-  ssize_t ret =
-      ngtcp2_conn_writev_stream(*session_,
-                                &path->path,
-                                nullptr,
-                                buf,
-                                ngtcp2_conn_get_max_udp_payload_size(*session_),
-                                ndatalen,
-                                flags,
-                                stream_data.id,
-                                stream_data.buf,
-                                stream_data.count,
-                                uv_hrtime());
+  ssize_t ret = ngtcp2_conn_writev_stream(
+      *session_,
+      &path->path,
+      nullptr,
+      buf,
+      ngtcp2_conn_get_max_tx_udp_payload_size(*session_),
+      ndatalen,
+      flags,
+      stream_data.id,
+      stream_data.buf,
+      stream_data.count,
+      uv_hrtime());
   return ret;
 }
 
