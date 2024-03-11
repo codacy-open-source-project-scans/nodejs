@@ -2265,7 +2265,7 @@ debugger. See [Signal Events][].
 ## `process.loadEnvFile(path)`
 
 <!-- YAML
-added: REPLACEME
+added: v21.7.0
 -->
 
 > Stability: 1.1 - Active development
@@ -3953,8 +3953,8 @@ cases:
   and generally can only happen during development of Node.js itself.
 * `12` **Invalid Debug Argument**: The `--inspect` and/or `--inspect-brk`
   options were set, but the port number chosen was invalid or unavailable.
-* `13` **Unfinished Top-Level Await**: `await` was used outside of a function
-  in the top-level code, but the passed `Promise` never resolved.
+* `13` **Unsettled Top-Level Await**: `await` was used outside of a function
+  in the top-level code, but the passed `Promise` never settled.
 * `14` **Snapshot Failure**: Node.js was started to build a V8 startup
   snapshot and it failed because certain requirements of the state of
   the application were not met.

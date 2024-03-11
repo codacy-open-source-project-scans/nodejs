@@ -735,6 +735,7 @@ class Environment : public MemoryRetainer {
   // a pseudo-boolean to indicate whether the exit code is undefined.
   inline AliasedInt32Array& exit_info();
   inline void set_exiting(bool value);
+  bool exiting() const;
   inline ExitCode exit_code(const ExitCode default_code) const;
 
   // This stores whether the --abort-on-uncaught-exception flag was passed
@@ -840,6 +841,7 @@ class Environment : public MemoryRetainer {
   void AtExit(void (*cb)(void* arg), void* arg);
   void RunAtExitCallbacks();
 
+  v8::Maybe<bool> CheckUnsettledTopLevelAwait();
   void RunWeakRefCleanup();
 
   v8::MaybeLocal<v8::Value> RunSnapshotSerializeCallback() const;
@@ -1001,6 +1003,9 @@ class Environment : public MemoryRetainer {
   inline uint64_t heap_prof_interval() const;
 
 #endif  // HAVE_INSPECTOR
+
+  inline const EmbedderPreloadCallback& embedder_preload() const;
+  inline void set_embedder_preload(EmbedderPreloadCallback fn);
 
   inline void set_process_exit_handler(
       std::function<void(Environment*, ExitCode)>&& handler);
@@ -1207,6 +1212,7 @@ class Environment : public MemoryRetainer {
   std::unique_ptr<PrincipalRealm> principal_realm_ = nullptr;
 
   builtins::BuiltinLoader builtin_loader_;
+  EmbedderPreloadCallback embedder_preload_;
 
   // Used by allocate_managed_buffer() and release_managed_buffer() to keep
   // track of the BackingStore for a given pointer.
